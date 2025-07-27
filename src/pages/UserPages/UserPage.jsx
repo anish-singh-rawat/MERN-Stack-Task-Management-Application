@@ -23,6 +23,7 @@ const UserPage = () => {
 
     // ✅ Fetch stored tasks
     const storedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    console.log("storedTasks : ",storedTasks)
     setTasks(storedTasks);
   }, []);
 

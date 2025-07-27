@@ -56,7 +56,7 @@ app.delete("/admin/users/:email", async (req, res) => {
   });
 
   app.use((req, res, next) => {
-    console.log(`Incoming request: ${req.method} ${req.url}`);
+    console.log(`Incoming request is : ${req.method} ${req.url}`);
     next();
   });
   app.put("/admin/users/:email", async (req, res) => {
