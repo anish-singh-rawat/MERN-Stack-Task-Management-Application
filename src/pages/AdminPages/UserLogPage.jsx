@@ -17,6 +17,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { FaTrash, FaSpinner, FaExclamationTriangle, FaUserShield, FaSort, FaFilter } from 'react-icons/fa';
 
 const UserLogPage = () => {
@@ -36,66 +37,29 @@ const UserLogPage = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   /**
-   * Load user logs from localStorage
+   * Load user logs from backend API
    */
   useEffect(() => {
     const loadLogs = async () => {
       try {
-        // Simulate network delay for realistic UX
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Get logs from localStorage or initialize with mock data
-        const storedLogs = localStorage.getItem('userLogs');
-        
-        if (storedLogs) {
-          const parsedLogs = JSON.parse(storedLogs);
-          setLogs(parsedLogs);
-          setFilteredLogs(parsedLogs);
-        } else {
-          // Initialize with mock data if no logs exist
-          const mockLogs = [
-            {
-              id: '1',
-              userId: 'admin-123',
-              username: 'admin@example.com',
-              role: 'admin',
-              action: 'login',
-              loginTime: new Date(Date.now() - 3600000).toISOString(),
-              logoutTime: null,
-              ipAddress: '192.168.1.1',
-              tokenName: 'eyJhbGciOi...'
-            },
-            {
-              id: '2',
-              userId: 'user-456',
-              username: 'user@example.com',
-              role: 'user',
-              action: 'login',
-              loginTime: new Date(Date.now() - 7200000).toISOString(),
-              logoutTime: new Date(Date.now() - 3600000).toISOString(),
-              ipAddress: '192.168.1.2',
-              tokenName: 'eyJhbGciOi...'
-            },
-            {
-              id: '3',
-              userId: 'user-789',
-              username: 'test@example.com',
-              role: 'user',
-              action: 'login',
-              loginTime: new Date(Date.now() - 86400000).toISOString(),
-              logoutTime: new Date(Date.now() - 82800000).toISOString(),
-              ipAddress: '192.168.1.3',
-              tokenName: 'eyJhbGciOi...'
-            }
-          ];
-          
-          // Store mock logs in localStorage
-          localStorage.setItem('userLogs', JSON.stringify(mockLogs));
-          
-          setLogs(mockLogs);
-          setFilteredLogs(mockLogs);
-        }
-        
+        setLoading(true);
+        const res = await axios.get('/server/src/routes/userLogRoute/logs', {
+          withCredentials: true
+        });
+        // Map backend _id to id for UI consistency
+        const logsData = res.data.map(log => ({
+          id: log._id,
+          userId: log.userId,
+          username: log.username,
+          role: log.role,
+          action: log.action,
+          loginTime: log.loginTime,
+          logoutTime: log.logoutTime,
+          ipAddress: log.ipAddress,
+          tokenName: log.tokenName
+        }));
+        setLogs(logsData);
+        setFilteredLogs(logsData);
         setError(null);
       } catch (err) {
         console.error('Error loading user logs:', err);
@@ -104,7 +68,6 @@ const UserLogPage = () => {
         setLoading(false);
       }
     };
-
     loadLogs();
   }, []);
 
@@ -212,28 +175,25 @@ const UserLogPage = () => {
   };
 
   /**
-   * Delete a log entry
+   * Delete a log entry using backend API
    * 
    * @param {string} logId - ID of the log to delete
    */
-  const handleDelete = (logId) => {
-    // If not confirming, show confirmation first
+  const handleDelete = async (logId) => {
     if (deleteConfirm !== logId) {
       setDeleteConfirm(logId);
       return;
     }
-    
-    // User confirmed deletion
-    const updatedLogs = logs.filter(log => log.id !== logId);
-    
-    // Update state
-    setLogs(updatedLogs);
-    setFilteredLogs(filteredLogs.filter(log => log.id !== logId));
-    
-    // Update localStorage
-    localStorage.setItem('userLogs', JSON.stringify(updatedLogs));
-    
-    // Reset confirmation state
+    try {
+      await axios.delete(`/server/src/routes/userLogRoute/logs/${logId}`, {
+        withCredentials: true
+      });
+      const updatedLogs = logs.filter(log => log.id !== logId);
+      setLogs(updatedLogs);
+      setFilteredLogs(filteredLogs.filter(log => log.id !== logId));
+    } catch (err) {
+      setError('Failed to delete log.');
+    }
     setDeleteConfirm(null);
   };
 
