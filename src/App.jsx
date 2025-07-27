@@ -38,6 +38,8 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, hasRole } = useAuth();
   const location = useLocation();
   const isAuthenticated = !!user || !!localStorage.getItem("token");
+  console.log("isAuthenticated : ",isAuthenticated);
+  //checking the if user is isAuthenticated or not
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
